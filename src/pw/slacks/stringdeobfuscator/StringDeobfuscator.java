@@ -1,20 +1,28 @@
 package pw.slacks.stringdeobfuscator;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 /* Created on 5/18/2015 @ 12:39 AM */
 public class StringDeobfuscator {
 
+    private static boolean VERBOSE;
+    private static PrintWriter pw;
     public List<ObfuscatedString> obfuscatedStringList;
     private String startString = null, className;
-    private int arraySize;
+    private int arraySize, addedKeys;
     private short startId = 0;
     private byte[] keyList = new byte[5];
-    private int addedKeys;
-    public static boolean VERBOSE;
-    private static PrintWriter pw;
+    private BytecodeViewer bytecodeViewer;
+
+    public StringDeobfuscator(){
+        this.obfuscatedStringList = new ArrayList<>();
+        this.bytecodeViewer = new BytecodeViewer();
+    }
 
     public static void main(String... args) {
         if (args.length == 0) {
@@ -32,6 +40,7 @@ public class StringDeobfuscator {
 
         StringDeobfuscator stringDeobfuscator = new StringDeobfuscator();
         stringDeobfuscator.parseFile(args[0]);
+
         List<Object> deobfuscatedStrings = stringDeobfuscator.deobfuscateString();
         writeToFile("=============================\nClass: " + args[0] + "\n=============================");
         for (Object s1 : deobfuscatedStrings) {
@@ -44,11 +53,6 @@ public class StringDeobfuscator {
         pw.println(s);
     }
 
-
-    public StringDeobfuscator(){
-        obfuscatedStringList = new ArrayList<>();
-    }
-
     private void log(String s){
         if(VERBOSE)
             System.out.println(s);
@@ -57,10 +61,11 @@ public class StringDeobfuscator {
     public void parseFile(String fileName) {
         try {
             this.className = fileName;
-            addedKeys = 0;
-            arraySize = 0;
-            obfuscatedStringList.clear();
-            String byteCode = new ClassBytecodeViewer().scanClass(new FileInputStream(fileName));
+            this.addedKeys = 0;
+            this.arraySize = 0;
+            this.obfuscatedStringList.clear();
+
+            String byteCode = this.bytecodeViewer.scanClass(new FileInputStream(fileName));
 
             String[] lines = byteCode.split("\n");
 
@@ -69,7 +74,6 @@ public class StringDeobfuscator {
                 if (lines.length > lineNum + 1 && lineNum - 1 != -1) {
                     String prevLine = lines[lineNum - 1];
                     String nextLine = lines[lineNum + 1];
-
                     parseLines(line, prevLine, nextLine);
                 }
             }
@@ -81,13 +85,13 @@ public class StringDeobfuscator {
 
     private void parseLines(String line, String prevLine, String nextLine){
         if (prevLine.contains("BIPUSH") && arraySize == 0) {
-            arraySize = Integer.parseInt(prevLine.split("PUSH ")[1]);
+            this.arraySize = Integer.parseInt(prevLine.split("PUSH ")[1]);
             log("Set array size: " + arraySize);
         }
         if (startString == null) {
             if (line.contains(" LDC ")) {
-                startString = line.split("\"")[1];
-                startId = Short.parseShort(nextLine.split("PUSH ")[1]);
+                this.startString = line.split("\"")[1];
+                this.startId = Short.parseShort(nextLine.split("PUSH ")[1]);
                 log("Set start string: " + startString);
                 log("Set start id: " + startId);
             }
@@ -127,8 +131,8 @@ public class StringDeobfuscator {
 
     private void addObfuscatedString(String s, int id, int nextId, int progressId){
         ObfuscatedString obfuscatedString = new ObfuscatedString(id, nextId, progressId, s);
+        this.obfuscatedStringList.add(obfuscatedString);
         log("Added obfuscated string: " + obfuscatedString.toString());
-        obfuscatedStringList.add(obfuscatedString);
     }
 
     /**
@@ -137,12 +141,17 @@ public class StringDeobfuscator {
      * @return List of the deobfuscated strings
      */
     public List<Object> deobfuscateString(){
+        //TODO: Really need to clean this entire method
         System.out.println("Starting string deobfuscation on: " + className);
+
         List<Object> deobfuscatedList = new ArrayList<>();
+
+        String nextString = startString;
+
         String[] var10000 = new String[arraySize];
         String[] stringArray = var10000;
+
         byte progressId = 0;
-        String nextString = startString;
         short nextId = startId;
 
         while(true) {

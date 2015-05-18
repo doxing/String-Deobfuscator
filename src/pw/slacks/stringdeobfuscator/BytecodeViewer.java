@@ -15,26 +15,26 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /* Created on 5/18/2015 @ 6:32 AM */
-public class ClassBytecodeViewer {
+public class BytecodeViewer {
 
     private TraceMethodVisitor mp;
     private Printer printer;
 
-    public ClassBytecodeViewer(){
+    public BytecodeViewer(){
         this.printer = new Textifier();
         this.mp = new TraceMethodVisitor(printer);
     }
 
     public String scanClass(InputStream in) throws Exception {
-        ClassReader cr=new ClassReader(in);
-        ClassNode classNode=new ClassNode();
+        ClassReader cr = new ClassReader(in);
+        ClassNode classNode = new ClassNode();
 
         cr.accept(classNode, 0);
 
         String byteCode = "";
 
         for(Object o : classNode.methods){
-            MethodNode methodNode = (MethodNode)o;
+            MethodNode methodNode = (MethodNode) o;
             if(methodNode.name.equals("<clinit>"))
                 byteCode += scanMethod(methodNode);
         }
