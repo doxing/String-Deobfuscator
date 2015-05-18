@@ -49,7 +49,7 @@ public class StringDeobfuscator {
             System.out.println(f.getPath());
             if(f.isDirectory())
                 deobfuscateRecursively(stringDeobfuscator, f);
-            else
+            else if(f.getName().endsWith(".class"))
                 deobfuscateClassStrings(new StringDeobfuscator(), f);
         }
     }
@@ -106,8 +106,8 @@ public class StringDeobfuscator {
             log("Set array size: " + this.arraySize);
         }
         if (startString == null) {
-            if (line.contains(" LDC \"") && nextLine.contains("PUSH")) {
-                this.startString = StringEscapeUtils.unescapeJava(line.split("\"")[1]);
+            if (line.contains("LDC \"") && nextLine.contains("PUSH")) {
+                this.startString = StringEscapeUtils.unescapeJava(line.substring(line.indexOf("\"")+1, line.lastIndexOf("\"")));
                 this.startId = Short.parseShort(nextLine.split("PUSH ")[1]);
                 log("Set start string: " + this.startString);
                 log("Set start id: " + this.startId);
@@ -122,12 +122,14 @@ public class StringDeobfuscator {
 
         if (line.contains("LDC \"") && (prevLine.contains("ICONST") || prevLine.contains("PUSH"))) {
             try {
-                String string = line.split("\"")[1];
+                String string = line.substring(line.indexOf("\"")+1, line.lastIndexOf("\"")); //line.split("LDC \"")[1];
                 int nextId;
                 if (nextLine.contains("ICONST")) {
                     nextId = Integer.parseInt(nextLine.split("_")[1]);
-                } else {
+                } else if (nextLine.contains("PUSH")){
                     nextId = Integer.parseInt(nextLine.split("PUSH ")[1]);
+                } else{
+                    return;
                 }
                 addObfuscatedString(string, nextId - 1, nextId, nextId + 1);
             } catch (IndexOutOfBoundsException e) {
@@ -136,7 +138,7 @@ public class StringDeobfuscator {
             }
         }
 
-        if (line.contains("FRAME FULL") && (nextLine.contains("PUSH") || nextLine.contains("ICONST"))) {
+        if (line.contains("FRAME FULL") && (nextLine.contains("PUSH") || nextLine.contains("ICONST")) && addedKeys<5) {
             int key;
             if (nextLine.contains("PUSH"))
                 key = Integer.parseInt(nextLine.split("PUSH ")[1]);
@@ -174,13 +176,18 @@ public class StringDeobfuscator {
         byte progressId = 0;
         short nextId = startId;
 
+        int bailout = 0;
         while(true) {
+            bailout++;
+            if(bailout>20000) {
+                System.out.println("BAILED OUT");
+                return null;
+            }
             char[] nextChars1;
             label163:
             {
                 if(nextString == null) {
-                    nextChars1 = new char[0];
-                    break label163;
+                    return null;
                 }
                 char[] nextChars0 = nextString.toCharArray();
                 int keyId = 0;
@@ -222,6 +229,7 @@ public class StringDeobfuscator {
 
                         nextChars2[keyId1] = (char) (singleChar ^ key);
                         ++keyId;
+
                         if (nextChars1Length != 0) {
                             break;
                         }
