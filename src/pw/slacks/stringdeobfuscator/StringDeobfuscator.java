@@ -32,9 +32,9 @@ public class StringDeobfuscator {
 
         StringDeobfuscator stringDeobfuscator = new StringDeobfuscator();
         stringDeobfuscator.parseFile(args[0]);
-        List<Object> decryptedStrings = stringDeobfuscator.decryptString();
+        List<Object> deobfuscatedStrings = stringDeobfuscator.deobfuscateString();
         writeToFile("=============================\nClass: " + args[0] + "\n=============================");
-        for (Object s1 : decryptedStrings) {
+        for (Object s1 : deobfuscatedStrings) {
             System.out.println(s1.toString());
             writeToFile(s1.toString());
         }
@@ -132,13 +132,13 @@ public class StringDeobfuscator {
     }
 
     /**
-     * Decrypts the obfuscated class's strings
+     * Deobfuscates the obfuscated class's strings
      * The method is copied and modified from an obfuscated class
      * @return List of the deobfuscated strings
      */
-    public List<Object> decryptString(){
-        System.out.println("Starting decryption on: " + className);
-        List<Object> decryptedList = new ArrayList<>();
+    public List<Object> deobfuscateString(){
+        System.out.println("Starting string deobfuscation on: " + className);
+        List<Object> deobfuscatedList = new ArrayList<>();
         String[] var10000 = new String[arraySize];
         String[] stringArray = var10000;
         byte progressId = 0;
@@ -200,7 +200,7 @@ public class StringDeobfuscator {
             String newString = (new String(nextChars1)).intern();
 
             if(nextId == startId-1){
-                return decryptedList;
+                return deobfuscatedList;
             }
 
             boolean notFound = true;
@@ -208,16 +208,16 @@ public class StringDeobfuscator {
                 if(s.getId() == nextId && s.getProgessId() != -999){
                     notFound = false;
                     stringArray[progressId] = newString;
-                    decryptedList.add(newString);
+                    deobfuscatedList.add(newString);
                     stringArray = var10000;
                     progressId = (byte)s.getProgessId();
-                    nextString = s.getEncryptedString();
+                    nextString = s.getObfuscatedString();
                     nextId = (short)s.getNextId();
                     break;
                 }
                 else if(s.getId() == nextId){
                     notFound = false;
-                    nextString = s.getEncryptedString();
+                    nextString = s.getObfuscatedString();
                     nextId = (short)s.getNextId();
                     break;
                 }
