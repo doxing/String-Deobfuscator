@@ -167,26 +167,23 @@ public class StringDeobfuscator {
 
         String nextString = startString;
 
-        if(arraySize < 0)
-            return null;
+        if(arraySize < 0) {
+            log("Array size is less than zero, setting it");
+            this.arraySize = obfuscatedStringList.size();
+        }
 
         String[] var10000 = new String[arraySize];
         String[] stringArray = var10000;
 
-        byte progressId = 0;
-        short nextId = startId;
+        int progressId = 0, nextId = startId;
 
         int bailout = 0;
-        while(true) {
-            bailout++;
-            if(bailout>20000) {
-                System.out.println("BAILED OUT");
-                return null;
-            }
+        while((++bailout < 20000)) {
             char[] nextChars1;
             label163:
             {
                 if(nextString == null) {
+                    log("nextString is null");
                     return null;
                 }
                 char[] nextChars0 = nextString.toCharArray();
@@ -206,8 +203,10 @@ public class StringDeobfuscator {
                     int keyId1 = keyId;
 
                     while (true) {
-                        if(nextChars2.length == 0)
+                        if(nextChars2.length == 0) {
+                            log("nextChars2's length is zero");
                             break;
+                        }
                         char singleChar = nextChars2[keyId1];
                         byte key;
                         switch (keyId % 5) {
@@ -246,19 +245,23 @@ public class StringDeobfuscator {
                 return deobfuscatedList;
             }
 
-            if(obfuscatedStringList.size()==0)
+            if(obfuscatedStringList.size()==0) {
+                log("obfuscatedStringList size is zero");
                 return null;
+            }
 
             boolean notFound = true;
             for(ObfuscatedString s : obfuscatedStringList){
                 if(s.getId() == nextId && s.getProgessId() != -999){
                     notFound = false;
-                    if(progressId >= stringArray.length)
+                    if(progressId >= stringArray.length) {
+                        log("progressId is larger than stringArray's length");
                         return null;
+                    }
                     stringArray[progressId] = newString;
                     deobfuscatedList.add(newString);
                     stringArray = var10000;
-                    progressId = (byte)s.getProgessId();
+                    progressId = s.getProgessId();
                     nextString = s.getObfuscatedString();
                     nextId = (short)s.getNextId();
                     break;
@@ -274,6 +277,7 @@ public class StringDeobfuscator {
             if(notFound)
                 nextId = -2;
         }
+        return deobfuscatedList;
     }
 
 }
