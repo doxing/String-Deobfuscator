@@ -3,7 +3,6 @@ package pw.slacks.stringdeobfuscator;
 
 import lombok.Getter;
 import lombok.ToString;
-import org.apache.commons.lang3.StringEscapeUtils;
 
 /* Created on 5/17/2015 @ 11:38 PM */
 @ToString
@@ -20,7 +19,7 @@ public class ObfuscatedString {
         this.progessId = progessId;
         this.nextId = nextId;
         this.id = id;
-        this.obfuscatedString = StringEscapeUtils.unescapeJava(obfuscatedString);
+        this.obfuscatedString = obfuscatedString;
         this.fieldName = fieldName;
     }
 }
