@@ -100,6 +100,10 @@ public class StringDeobfuscator {
         }
     }
 
+    private String parseLdc(String line){
+        return StringEscapeUtils.unescapeJava(line.substring(line.indexOf("\"")+1, line.lastIndexOf("\"")));
+    }
+
     private void parseLines(String line, String prevLine, String nextLine){
         if (prevLine.contains("BIPUSH") && arraySize == 0) {
             this.arraySize = Integer.parseInt(prevLine.split("PUSH ")[1]);
@@ -107,7 +111,7 @@ public class StringDeobfuscator {
         }
         if (startString == null) {
             if (line.contains("LDC \"") && nextLine.contains("PUSH")) {
-                this.startString = StringEscapeUtils.unescapeJava(line.substring(line.indexOf("\"")+1, line.lastIndexOf("\"")));
+                this.startString = parseLdc(line);
                 this.startId = Short.parseShort(nextLine.split("PUSH ")[1]);
                 log("Set start string: " + this.startString);
                 log("Set start id: " + this.startId);
@@ -115,14 +119,14 @@ public class StringDeobfuscator {
         }
 
         if (prevLine.contains("PUTSTATIC") && line.contains("LDC \"") && nextLine.contains("PUSH")) {
-            String string = line.split("\"")[1];
+            String string = parseLdc(line);
             int nextId = Integer.parseInt(nextLine.split("PUSH ")[1]);
             addObfuscatedString(string, nextId - 1, nextId, -999);
         }
 
         if (line.contains("LDC \"") && (prevLine.contains("ICONST") || prevLine.contains("PUSH"))) {
             try {
-                String string = line.substring(line.indexOf("\"")+1, line.lastIndexOf("\"")); //line.split("LDC \"")[1];
+                String string = parseLdc(line);
                 int nextId;
                 if (nextLine.contains("ICONST")) {
                     nextId = Integer.parseInt(nextLine.split("_")[1]);
@@ -208,24 +212,8 @@ public class StringDeobfuscator {
                             break;
                         }
                         char singleChar = nextChars2[keyId1];
-                        byte key;
-                        switch (keyId % 5) {
-                            case 0:
-                                key = keyList[0];
-                                break;
-                            case 1:
-                                key = keyList[1];
-                                break;
-                            case 2:
-                                key = keyList[2];
-                                break;
-                            case 3:
-                                key = keyList[3];
-                                break;
-                            default:
-                                key = keyList[4];
-                        }
 
+                        byte key = keyList[keyId%5];
                         nextChars2[keyId1] = (char) (singleChar ^ key);
                         ++keyId;
 
