@@ -86,7 +86,7 @@ public class Deobfuscator {
                 addObfuscatedString(string, nextId - 1, nextId, nextId + 1);
             } catch (IndexOutOfBoundsException e) {
                 e.printStackTrace();
-                Log.log("IndexOutOfBounds String: " + line);
+                Log.log("IndexOutOfBounds Str: " + line);
             }
         }
 
